@@ -1,0 +1,19 @@
+{
+  "name": "auth-gateway-mern",
+  "version": "1.0.0",
+  "description": "### A full-featured authentication system built with the MERN (MongoDB, Express, React, Node.js) stack, featuring JWT authentication, OAuth login, and password recovery functionality.",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server/main.js",
+    "dev": "nodemon server/main.js"
+  },
+  "author": "Vishal Rathore",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
