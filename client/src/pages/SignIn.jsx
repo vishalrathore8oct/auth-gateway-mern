@@ -1,7 +1,7 @@
 export default function SignIn() {
   return (
     <div>
-      SignIn
+      SingIn
     </div>
   )
 }
