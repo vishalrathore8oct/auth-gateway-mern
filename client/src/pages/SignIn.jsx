@@ -1,12 +1,16 @@
 import { Link, useNavigate } from "react-router-dom"
 import { useState } from "react"
+import { logInStart, logInSuccess, logInFailure } from "../redux/user/userSlice.js"
+import { useDispatch, useSelector } from "react-redux"
+import OAuth from "../components/OAuth.jsx"
 
 export default function SignIn() {
 
   const [formData, setformData] = useState({})
-  const [error, setError] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const { loading, error } = useSelector( (state) => state.user)
+
   const navigate = useNavigate();
+  const dispatch = useDispatch() 
 
   const handleChange = (e) => {
     setformData({ ...formData, [e.target.id]: e.target.value })
@@ -16,8 +20,7 @@ export default function SignIn() {
     e.preventDefault()
 
     try {
-      setLoading(true)
-      setError(false)
+      dispatch(logInStart())
       const res = await fetch("/api/auth/sign-in", {
         method: "POST",
         headers: {
@@ -26,20 +29,18 @@ export default function SignIn() {
         body: JSON.stringify(formData)
       })
       const data = await res.json()
-      // console.log(data);
-
-      setLoading(false)
 
       if (data.success === false) {
-        setError(true)
+        dispatch(logInSuccess(data))
         return
       }
 
+      dispatch(logInSuccess(data))
+
       navigate("/log-in")
 
-    } catch (error) {
-      setLoading(false)
-      setError(true)
+    } catch (err) {
+      dispatch(logInFailure(err))
       
     }
   }
@@ -54,12 +55,13 @@ export default function SignIn() {
         <button disabled={loading} className="bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-90 disabled:opacity-80">
           {loading ? "Loading....": "Sign In"}
         </button>
+        <OAuth />
       </form>
       <div className="flex gap-3 mt-5">
         <p>Hava an Account ?</p>
         <Link to="/log-in"><span className="text-blue-500">Log In</span></Link>
       </div>
-      <p className="text-red-700">{error && "Something Went Wrong!"}</p>
+      <p className="text-red-700">{error ? error.message || "Something Went Wrong!": ""}</p>
     </div>
   )
 }
