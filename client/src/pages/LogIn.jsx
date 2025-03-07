@@ -2,13 +2,15 @@ import { Link, useNavigate } from "react-router-dom"
 import { useState } from "react"
 import { logInStart, logInSuccess, logInFailure } from "../redux/user/userSlice.js"
 import { useDispatch, useSelector } from "react-redux"
+import OAuth from "../components/OAuth.jsx"
 
 export default function LogIn() {
 
   const [formData, setformData] = useState({})
 
   const { loading, error } = useSelector( (state) => state.user)
-
+  console.log(loading, error);
+  
   const navigate = useNavigate();
   const dispatch = useDispatch() 
 
@@ -53,6 +55,7 @@ export default function LogIn() {
         <button disabled={loading} className="bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-90 disabled:opacity-80">
           {loading ? "Loading....": "Log In"}
         </button>
+        <OAuth />
       </form>
       <div className="flex gap-3 mt-5">
         <p>Do not Hava an Account ?</p>
