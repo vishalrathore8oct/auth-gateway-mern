@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
+import { useSelector } from "react-redux"
 
 export default function Navbar() {
+    const { currentUser } = useSelector((state) => state.user)
     return (
         <div>
             <div className="bg-slate-300">
@@ -8,10 +10,16 @@ export default function Navbar() {
                     <Link to="/"><h1 className="font-bold">Auth App</h1></Link>
                     <ul className="flex gap-16">
                         <Link to="/"><li>Home</li></Link>
-                        <Link to="/log-in"><li>Log In</li></Link>
+                        <Link to="/profile">
+                        {currentUser ? (<img src={currentUser.profilePicture} alt="profilePicture" className="h-12 w-12 rounded-full object-cover" />) : (<li>Log In</li>)}
+                        </Link>
                     </ul>
                 </div>
+                
             </div>
         </div>
+
+
+
     )
 }

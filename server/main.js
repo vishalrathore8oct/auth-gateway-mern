@@ -4,6 +4,9 @@ import dotenv from "dotenv";
 import userRoutes from "./routes/user.route.js"
 import authRoutes from "./routes/auth.route.js"
 import { errorMiddleware } from "./middlewares/error.middleware.js";
+import cors from "cors"
+import cookieParser from "cookie-parser";
+
 dotenv.config();
 
 mongoose.connect(process.env.MONGO_URL).then(() => {
@@ -15,14 +18,24 @@ mongoose.connect(process.env.MONGO_URL).then(() => {
 })
 
 const app = express();
-app.use(express.json())
+const PORT = process.env.PORT || 8000
 
-app.listen(3000, () => {
-    console.log("Server Listening on Port 3000");
+app.use(express.json())
+app.use(cookieParser())
+app.use(express.urlencoded({extended: true}))
+app.use(cors({
+    origin: [process.env.FRONTEND_URL], 
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+}))
+
+app.listen(PORT, () => {
+    console.log(`Server Listening on Port ${PORT}\nURL => http://localhost:${PORT}`);
 })
 
 
 app.use("/api/user", userRoutes)
 app.use("/api/auth", authRoutes)
+
 
 app.use(errorMiddleware)
