@@ -28,7 +28,6 @@ app.use(cors({
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
 }))
-
 app.listen(PORT, () => {
     console.log(`Server Listening on Port ${PORT}\nURL => http://localhost:${PORT}`);
 })
