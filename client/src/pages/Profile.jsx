@@ -1,15 +1,18 @@
-import { useSelector } from "react-redux"
+import { useSelector, useDispatch } from "react-redux"
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { userUpdateStart, userUpdateSuccess, userUpdateFailure } from "../redux/user/userSlice.js";
 
 export default function Profile() {
-  const { currentUser } = useSelector((state) => state.user)
+  const { currentUser, loading, error } = useSelector((state) => state.user)
   const fileRef = useRef(null);
   const [image, setImage] = useState(undefined);
   const [formData, setFormData] = useState({})
-  const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [error, setError] = useState("");
+  const [uploadError, setUploadError] = useState("");
+  const [updateSuccess, setUpdateSuccess] = useState(false)
+  const dispatch = useDispatch()
 
   useEffect(() => {
     if (image) {
@@ -18,9 +21,9 @@ export default function Profile() {
   }, [image])
 
   const handleFileUpload = async (image) => {
-    setLoading(true)
+    setUploading(true)
     setProgress(0)
-    setError("");
+    setUploadError("");
 
     const data = new FormData()
     data.append("file", image)
@@ -39,36 +42,69 @@ export default function Profile() {
 
     } catch (error) {
       console.error("Error uploading image:", error);
-      setError("Failed to upload image. Please try again.");
+      setUploadError("Failed to upload image. Please try again.");
     }
 
-    setLoading(false)
+    setUploading(false)
   }
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.id]: e.target.value })
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    try {
+      dispatch(userUpdateStart())
+      const res = await fetch(`/api/user/update/${currentUser._id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      })
+      const data = await res.json()
+
+      if (data.success === false) {
+        dispatch(userUpdateFailure(data))
+        return
+      }
+
+      dispatch(userUpdateSuccess(data))
+      setUpdateSuccess(true)
+
+    } catch (err) {
+      dispatch(userUpdateFailure(err))
+    } setError
+  }
+
+  // console.log(formData);
 
 
   return (
     <div className="p-3 max-w-lg mx-auto">
       <h1 className="text-3xl font-semibold text-center my-7">Profile</h1>
-      <form className="flex flex-col gap-5">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <input type="file" ref={fileRef} hidden accept="image/*" onChange={(e) => setImage(e.target.files[0])} />
         <img src={formData.profilePicture || currentUser.profilePicture} alt="profilePicture" className="h-32 w-32 self-center cursor-pointer rounded-full object-cover mt-2" onClick={() => fileRef.current.click()} />
-        {loading ? (
+        {uploading ? (
           <p className="text-center font-bold text-xl text-gray-500">
             Uploading... {progress}%
           </p>
-        ) : error ? (
-          <p className="text-center font-bold text-xl text-red-500">{error}</p>
+        ) : uploadError ? (
+          <p className="text-center font-bold text-xl text-red-500">{uploadError}</p>
         ) : formData.profilePicture ? (
           <p className="text-center font-bold text-xl text-green-500">
             Uploaded Successfully
           </p>
         ) : null}
 
-        <input type="text" name="username" id="username" placeholder="username" className="bg-slate-200 p-3 rounded-lg" defaultValue={currentUser.username} />
-        <input type="email" name="email" id="email" placeholder="email" className="bg-slate-200 p-3 rounded-lg" defaultValue={currentUser.email} />
-        <input type="password" name="password" id="password" placeholder="password" className="bg-slate-200 p-3 rounded-lg" />
+        <input type="text" name="username" id="username" placeholder="username" className="bg-slate-200 p-3 rounded-lg" defaultValue={currentUser.username} onChange={handleChange} />
+        <input type="email" name="email" id="email" placeholder="email" className="bg-slate-200 p-3 rounded-lg" defaultValue={currentUser.email} onChange={handleChange} />
+        <input type="password" name="password" id="password" placeholder="password" className="bg-slate-200 p-3 rounded-lg" onChange={handleChange} />
         <button className="bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-90 disabled:opacity-80">
-          Update
+          {loading ? "Loading..." : "Update"}
         </button>
       </form>
       <div className="flex justify-between mt-5">
@@ -79,7 +115,9 @@ export default function Profile() {
           Log Out
         </span>
       </div>
+      <p className="text-red-500 mt-5">{error && "Something Went Wrong !"}</p>
+      <p className="text-green-500 mt-5 text-center">{updateSuccess && "User is Updated Successfully !"}</p>
     </div>
 
   )
-}
+} 
