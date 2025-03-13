@@ -1,6 +1,7 @@
 import User from "../models/user.model.js"
 import bcryptjs from "bcryptjs"
 import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 
 export const signIn = async (req, res, next) => {
@@ -10,7 +11,7 @@ export const signIn = async (req, res, next) => {
         const newUser = new User({ username, email, password: hashedPassword })
         await newUser.save()
 
-        res.status(201).json({ message: "User Created Successfully" })
+        res.status(201).json(new ApiResponse(201, null, "User Created Successfully"));
 
     } catch (error) {
         next(error)
@@ -28,6 +29,8 @@ export const logIn = async (req, res, next) => {
         const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET);
         const { password: hashedPassword, ...restData } = validUser._doc
         const expiryDate = new Date(Date.now() + 3600000)
+        res.cookie("token", token, { httpOnly: true, expires: expiryDate }).status(200)
+            .json(new ApiResponse(200, restData, "Login Successful"));
         res.cookie("token", token, { httpOnly: true, expires: expiryDate }).status(200).json(restData)
     } catch (error) {
         next(error)
@@ -43,20 +46,25 @@ export const google = async (req, res, next) => {
             const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
             const { password: hashedPassword, ...restData } = user._doc
             const expiryDate = new Date(Date.now() + 3600000)
-            // console.log("oAuth-log-in", restData);
-            res.cookie("token", token, { httpOnly: true, expires: expiryDate }).status(200).json(restData)
+            res.cookie("token", token, { httpOnly: true, expires: expiryDate }).status(200)
+                .json(new ApiResponse(200, restData, "Google Login Successful"));
         } else {
             const generatedPassword = (Math.random().toString(36).slice(-8)) + (Math.random().toString(36).slice(-8))
             const hashedPassword = await bcryptjs.hash(generatedPassword, 10)
-            const newUser = new User({ username: req.body.name.split(" ").join("").toLowerCase() + Math.random().toString(36).slice(-8), email: req.body.email, password: hashedPassword, profilePicture: req.body.photo })
+            const newUser = new User({
+                username: req.body.name.split(" ").join("").toLowerCase() + Math.random().toString(36).slice(-8),
+                email: req.body.email,
+                password: hashedPassword,
+                profilePicture: req.body.photo
+            })
             await newUser.save()
 
             const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET);
             const { password: hashedPassword2, ...restData } = newUser._doc
             const expiryDate = new Date(Date.now() + 3600000)
-            // console.log("oAuth-sing-in", restData);
-            res.cookie("token", token, { httpOnly: true, expires: expiryDate }).status(200).json(restData)
-            
+            res.cookie("token", token, { httpOnly: true, expires: expiryDate }).status(200)
+                .json(new ApiResponse(200, restData, "Google Sign-Up Successful"));
+
         }
     } catch (error) {
         next(error)
@@ -67,7 +75,8 @@ export const google = async (req, res, next) => {
 
 export const logOut = async (req, res, next) => {
     try {
-        res.clearCookie('token').status(200).json("Log Out Successfully Done.")
+        res.clearCookie("token").status(200)
+            .json(new ApiResponse(200, null, "Log Out Successfully Done."));
     } catch (error) {
         next(error)
     }
