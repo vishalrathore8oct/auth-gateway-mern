@@ -1,7 +1,7 @@
 import { useSelector, useDispatch } from "react-redux"
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { userUpdateStart, userUpdateSuccess, userUpdateFailure } from "../redux/user/userSlice.js";
+import { userUpdateStart, userUpdateSuccess, userUpdateFailure, userDeleteStart, userDeleteSuccess, userDeleteFailure } from "../redux/user/userSlice.js";
 
 export default function Profile() {
   const { currentUser, loading, error } = useSelector((state) => state.user)
@@ -76,7 +76,27 @@ export default function Profile() {
 
     } catch (err) {
       dispatch(userUpdateFailure(err))
-    } setError
+    }
+  }
+
+  const handleDeleteAccount = async (e) => {
+    try {
+      dispatch(userDeleteStart())
+      const res = await fetch(`/api/user/delete/${currentUser._id}`, {
+        method: "DELETE",
+      })
+      const data = await res.json()
+
+      if (data.success === false) {
+        dispatch(userDeleteFailure(data))
+        return
+      }
+
+      dispatch(userDeleteSuccess(data))
+
+    } catch (err) {
+      dispatch(userDeleteFailure(err))
+    }
   }
 
   // console.log(formData);
@@ -108,7 +128,7 @@ export default function Profile() {
         </button>
       </form>
       <div className="flex justify-between mt-5">
-        <span className="text-red-700 font-semibold cursor-pointer hover:underline bg-white rounded-lg shadow-md p-4">
+        <span onClick={handleDeleteAccount} className="text-red-700 font-semibold cursor-pointer hover:underline bg-white rounded-lg shadow-md p-4">
           Delete Account
         </span>
         <span className="text-red-700 font-semibold cursor-pointer hover:underline bg-white rounded-lg shadow-md p-4">
