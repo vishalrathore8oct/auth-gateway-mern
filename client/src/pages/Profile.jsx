@@ -1,7 +1,7 @@
 import { useSelector, useDispatch } from "react-redux"
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { userUpdateStart, userUpdateSuccess, userUpdateFailure, userDeleteStart, userDeleteSuccess, userDeleteFailure } from "../redux/user/userSlice.js";
+import { userUpdateStart, userUpdateSuccess, userUpdateFailure, userDeleteStart, userDeleteSuccess, userDeleteFailure, logOut } from "../redux/user/userSlice.js";
 
 export default function Profile() {
   const { currentUser, loading, error } = useSelector((state) => state.user)
@@ -79,7 +79,7 @@ export default function Profile() {
     }
   }
 
-  const handleDeleteAccount = async (e) => {
+  const handleDeleteAccount = async () => {
     try {
       dispatch(userDeleteStart())
       const res = await fetch(`/api/user/delete/${currentUser._id}`, {
@@ -96,6 +96,16 @@ export default function Profile() {
 
     } catch (err) {
       dispatch(userDeleteFailure(err))
+    }
+  }
+
+  const handleLogOut = async () => {
+    try {
+      await fetch("/api/auth/log-out")
+      dispatch(logOut())
+    } catch (error) {
+      console.log(error);
+      
     }
   }
 
@@ -131,11 +141,11 @@ export default function Profile() {
         <span onClick={handleDeleteAccount} className="text-red-700 font-semibold cursor-pointer hover:underline bg-white rounded-lg shadow-md p-4">
           Delete Account
         </span>
-        <span className="text-red-700 font-semibold cursor-pointer hover:underline bg-white rounded-lg shadow-md p-4">
+        <span onClick={handleLogOut} className="text-red-700 font-semibold cursor-pointer hover:underline bg-white rounded-lg shadow-md p-4">
           Log Out
         </span>
       </div>
-      <p className="text-red-500 mt-5">{error && "Something Went Wrong !"}</p>
+      <p className="text-red-500 mt-5">{error ? error.message || "Something Went Wrong!": ""}</p>
       <p className="text-green-500 mt-5 text-center">{updateSuccess && "User is Updated Successfully !"}</p>
     </div>
 
