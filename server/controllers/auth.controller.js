@@ -46,6 +46,7 @@ export const google = async (req, res, next) => {
             const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
             const { password: hashedPassword, ...restData } = user._doc
             const expiryDate = new Date(Date.now() + 3600000)
+            
             res.cookie("token", token, { httpOnly: true, expires: expiryDate }).status(200)
                 .json(new ApiResponse(200, restData, "Google Login Successful"));
         } else {
@@ -62,6 +63,7 @@ export const google = async (req, res, next) => {
             const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET);
             const { password: hashedPassword2, ...restData } = newUser._doc
             const expiryDate = new Date(Date.now() + 3600000)
+            
             res.cookie("token", token, { httpOnly: true, expires: expiryDate }).status(200)
                 .json(new ApiResponse(200, restData, "Google Sign-Up Successful"));
 

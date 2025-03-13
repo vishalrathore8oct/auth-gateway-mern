@@ -8,10 +8,10 @@ export default function LogIn() {
 
   const [formData, setformData] = useState({})
 
-  const { loading, error } = useSelector( (state) => state.user)
-  
+  const { loading, error } = useSelector((state) => state.user)
+
   const navigate = useNavigate();
-  const dispatch = useDispatch() 
+  const dispatch = useDispatch()
 
   const handleChange = (e) => {
     setformData({ ...formData, [e.target.id]: e.target.value })
@@ -35,13 +35,13 @@ export default function LogIn() {
         return
       }
 
-      dispatch(logInSuccess(data))
+      dispatch(logInSuccess(data.data))
 
       navigate("/")
 
     } catch (err) {
       dispatch(logInFailure(err))
-      
+
     }
   }
 
@@ -52,7 +52,7 @@ export default function LogIn() {
         <input type="email" name="email" id="email" placeholder="email" className="bg-slate-200 p-3 rounded-lg" onChange={handleChange} />
         <input type="password" name="password" id="password" placeholder="password" className="bg-slate-200 p-3 rounded-lg" onChange={handleChange} />
         <button disabled={loading} className="bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-90 disabled:opacity-80">
-          {loading ? "Loading....": "Log In"}
+          {loading ? "Loading...." : "Log In"}
         </button>
         <OAuth />
       </form>
@@ -60,7 +60,7 @@ export default function LogIn() {
         <p>Do not Hava an Account ?</p>
         <Link to="/sign-in"><span className="text-blue-500">Sign In</span></Link>
       </div>
-      <p className="text-red-700">{error ? error.message || "Something Went Wrong!": ""}</p>
+      <p className="text-red-700">{error ? error.message || "Something Went Wrong!" : ""}</p>
     </div>
   )
 }

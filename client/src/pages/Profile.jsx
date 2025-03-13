@@ -71,7 +71,7 @@ export default function Profile() {
         return
       }
 
-      dispatch(userUpdateSuccess(data))
+      dispatch(userUpdateSuccess(data.data))
       setUpdateSuccess(true)
 
     } catch (err) {
