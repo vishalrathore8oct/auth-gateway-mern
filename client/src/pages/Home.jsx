@@ -1,6 +1,6 @@
 export default function Home() {
   return (
-    <div className="min-h-[94vh] flex flex-col items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
       <header className="w-full bg-blue-600 text-white text-center p-4 text-2xl font-bold">
         My Home Page
       </header>
