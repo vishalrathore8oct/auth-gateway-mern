@@ -1,10 +1,10 @@
 import User from "../models/user.model.js"
-import { errorHandler } from "../utils/customError.js"
+import { ApiError } from "../utils/ApiError.js"
 import bcryptjs from "bcryptjs"
 
 export const updateUser = async (req, res, next) => {
     if (req.user.id !== req.params.id) {
-        return next(errorHandler(401, "Unauthorized! You can only update your own account."))
+        return next(new ApiError(401, "Unauthorized! You can only update your own account."));
     }
 
     try {
@@ -23,6 +23,10 @@ export const updateUser = async (req, res, next) => {
             { new: true }
         )
 
+        if (!updatedUser) {
+            return next(new ApiError(404, "User not found!"));
+        }
+
         const {password, ...rest} = updatedUser._doc
         res.status(200).json(rest)
 
@@ -33,11 +37,15 @@ export const updateUser = async (req, res, next) => {
 
 export const deleteUser = async (req, res, next) => {
     if (req.user.id !== req.params.id) {
-        return next(errorHandler(401, "Unauthorized! You can only delete your own account."))
+        return next(new ApiError(401, "Unauthorized! You can only delete your own account."));
     }
 
     try {
-        await User.findByIdAndDelete(req.params.id) 
+        const user = await User.findByIdAndDelete(req.params.id) 
+        if (!user) {
+            return next(new ApiError(404, "User not found!"));
+        }
+
         res.clearCookie('token').status(200).json("User has been deleted Successfully!")
 
     } catch (error) {
