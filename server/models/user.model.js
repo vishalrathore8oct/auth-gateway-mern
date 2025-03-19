@@ -1,15 +1,14 @@
 import mongoose from "mongoose";
+import crypto from "crypto";
 
 const userSchema = new mongoose.Schema({
     username: {
         type: String,
         required: true,
-        unique: true
     },
     email: {
         type: String,
         required: true,
-        unique: true
     },
     password: {
         type: String,
@@ -19,11 +18,14 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: "https://cdn.pixabay.com/photo/2016/08/08/09/17/avatar-1577909_1280.png"
     },
+    phone: {
+        type: String,
+        required: true,
+    },
     accountVerified: {
         type: Boolean,
         default: false
     },
-    phone: String,
     verificationCode: Number,
     verificationCodeExpire: Date,
     resetPasswordToken: String,
@@ -45,6 +47,19 @@ userSchema.methods.generateVerificationCode = function () {
 
     return verificationCode
 }
+
+userSchema.methods.generateResetPasswordToken = function () {
+    const resetToken = crypto.randomBytes(20).toString("hex");
+  
+    this.resetPasswordToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+  
+    this.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
+  
+    return resetToken;
+  };
 
 const User = mongoose.model("User", userSchema)
 

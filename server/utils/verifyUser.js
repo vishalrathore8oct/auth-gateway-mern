@@ -10,6 +10,7 @@ export const verifyToken = (req, res, next) => {
         if (err) return next(new ApiError(403, "Invalid or expired token. Please log in again."));
 
         req.user = user
+
         next()
     })
 }

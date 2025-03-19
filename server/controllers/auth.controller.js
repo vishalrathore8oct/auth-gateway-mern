@@ -4,6 +4,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import { sendEmail } from "../utils/sendEmail.js";
+import crypto from "crypto";
 // import twilio from "twilio";
 
 // const client = new twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
@@ -45,10 +46,9 @@ export const signIn = async (req, res, next) => {
             ],
         });
 
-        if (registerationAttemptsByUser.length > 3) {
+        if (registerationAttemptsByUser.length >= 3) {
             return next(new ApiError(400, "You have exceeded the maximum number of attempts (3). Please try again after an hour."));
         }
-
 
         const hashedPassword = await bcryptjs.hash(password, 10)
         const userData = {
@@ -71,8 +71,6 @@ export const signIn = async (req, res, next) => {
             next
         );
 
-        // res.status(201).json(new ApiResponse(201, null, "User Created Successfully"));
-
     } catch (error) {
         next(error)
     }
@@ -91,8 +89,8 @@ async function sendVerificationCode(
         if (verificationMethod === "email") {
             const message = generateEmailTemplate(verificationCode);
             await sendEmail({ email, subject: "Your Verification Code", message });
-            return res.status(200).json(new ApiResponse(200, null, `Verification email successfully sent to ${username}`))
-        } 
+            return res.status(200).json(new ApiResponse(200, null, `User Created Successfully and Verification code successfully sent to ${username} registed email ID`))
+        }
         // else if (verificationMethod === "call") {
         //     const verificationCodeWithSpace = verificationCode
         //         .toString()
@@ -110,7 +108,7 @@ async function sendVerificationCode(
         //     return res.status(200).json(new ApiResponse(200, null, `Voice Call Successfully sent to ${phone}`))
         // } 
         // else if (verificationMethod === "sms") {
-    
+
         //     await client.messages.create({
         //         body: `Your verification code is: ${verificationCode}`,
         //         from: process.env.TWILIO_PHONE_NUMBER,
@@ -151,18 +149,21 @@ function generateEmailTemplate(verificationCode) {
 
 
 export const logIn = async (req, res, next) => {
-    const { email, password } = req.body
 
     try {
-        const validUser = await User.findOne({ email })
-        if (!validUser) return next(new ApiError(404, "User Not Found!"));
+        const { email, password } = req.body
+        if (!email || !password) {
+            return next(new ApiError(400, "Both email and password are required."));
+        }
+        const validUser = await User.findOne({ email, accountVerified: true })
+        if (!validUser) return next(new ApiError(404, "No account found with this email or the account is not verified."));
         const validPassword = await bcryptjs.compare(password, validUser.password)
-        if (!validPassword) return next(new ApiError(401, "Wrong Credentials!"));
+        if (!validPassword) return next(new ApiError(401, "Invalid email or password."));
         const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET);
         const { password: hashedPassword, ...restData } = validUser._doc
         const expiryDate = new Date(Date.now() + 3600000)
         res.cookie("token", token, { httpOnly: true, expires: expiryDate }).status(200)
-            .json(new ApiResponse(200, restData, "Login Successful"));
+            .json(new ApiResponse(200, {...restData, token}, "User logged in successfully."));
     } catch (error) {
         next(error)
     }
@@ -214,3 +215,91 @@ export const logOut = async (req, res, next) => {
         next(error)
     }
 }
+
+export const verifyOTP = async (req, res, next) => {
+    const { email, otp, phone } = req.body;
+
+    function validatePhoneNumber(phone) {
+        const phoneRegex = /^\+91\d{10}$/;
+        return phoneRegex.test(phone);
+    }
+    if (!validatePhoneNumber(phone)) {
+        return next(new ApiError(400, "Invalid phone number."));
+    }
+
+    try {
+        const userAllEntries = await User.find({
+            $or: [
+                {
+                    email,
+                    accountVerified: false,
+                },
+                {
+                    phone,
+                    accountVerified: false,
+                },
+            ],
+        }).sort({ createdAt: -1 });
+
+        if (!userAllEntries) {
+            return next(new ApiError(404, "User not found."));
+        }
+
+        let user;
+
+        if (userAllEntries.length > 1) {
+            user = userAllEntries[0];
+
+            await User.deleteMany({
+                _id: { $ne: user._id },
+                $or: [
+                    { phone, accountVerified: false },
+                    { email, accountVerified: false },
+                ],
+            });
+        } else {
+            user = userAllEntries[0];
+        }
+
+        if (user.verificationCode !== Number(otp)) {
+            return next(new ApiError(400, "Invalid OTP."));
+        }
+
+        const currentTime = Date.now();
+
+        const verificationCodeExpire = new Date(
+            user.verificationCodeExpire
+        ).getTime();
+        if (currentTime > verificationCodeExpire) {
+            return next(new ApiError(400, "OTP Expired."));
+        }
+
+        user.accountVerified = true;
+        user.verificationCode = null;
+        user.verificationCodeExpire = null;
+        await user.save({ validateModifiedOnly: true });
+
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+            expiresIn: process.env.JWT_EXPIRE,
+        });
+
+        const expiryDate = new Date(Date.now() + 3600000)
+        res.cookie("token", token, { httpOnly: true, expires: expiryDate })
+        res.status(200).json(new ApiResponse(200, null, "Account Verified."))
+    } catch (error) {
+        return next(new ApiError(500, "Internal Server Error."));
+    }
+};
+
+export const getUser = async (req, res, next) => {
+
+    try {
+        const user = req.user;
+        const userData = await User.findById(user.id).select("-password")
+        res.status(200).json(new ApiResponse(200, userData));
+
+    } catch (error) {
+        next(error)
+    }
+
+};
