@@ -8,6 +8,5 @@ export const removeUnverifiedAccounts = () => {
       accountVerified: false,
       createdAt: { $lt: thirtyMinutesAgo },
     });
-    
   });
 };
