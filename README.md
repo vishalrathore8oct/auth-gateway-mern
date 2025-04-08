@@ -82,16 +82,7 @@ Create a `.env` file inside the **`server/`** directory with:
 ```env
 MONGO_URL=<your-mongodb-connection-string>
 JWT_SECRET=<your-jwt-secret>
-JWT_EXPIRE=7d
-FRONTEND_URL=http://localhost:5173
 PORT=3000
-
-SMTP_MAIL=<your-email>
-SMTP_PASSWORD=<your-email-password>
-SMTP_HOST=smtp.gmail.com
-SMTP_SERVICE=gmail
-SMTP_PORT=465
-
 VITE_FIREBASE_API_KEY=<your-firebase-api-key>
 
 ```
