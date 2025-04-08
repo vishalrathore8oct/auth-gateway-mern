@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node server/main.js",
-    "dev": "nodemon server/main.js"
+    "dev": "nodemon server/main.js",
+    "build": "npm install && npm install --prefix client && npm run build --prefix client"
   },
   "author": "Vishal Rathore",
   "license": "ISC",

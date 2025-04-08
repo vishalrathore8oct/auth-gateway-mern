@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.route.js"
 import { errorMiddleware } from "./middlewares/error.middleware.js";
 import cors from "cors"
 import cookieParser from "cookie-parser";
+import path from "path";
 
 dotenv.config();
 
@@ -17,6 +18,8 @@ mongoose.connect(process.env.MONGO_URL).then(() => {
     
 })
 
+const __dirname = path.resolve();
+
 const app = express();
 const PORT = process.env.PORT || 8000
 
@@ -24,11 +27,14 @@ app.use(express.json())
 app.use(cookieParser())
 app.use(express.urlencoded({extended: true}))
 app.use(cors())
-// app.use(cors({
-//     origin: [process.env.FRONTEND_URL], 
-//     methods: ["GET", "POST", "PUT", "DELETE"],
-//     credentials: true
-// }))
+
+app.use(express.static(path.join(__dirname, '/client/dist')));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
+});
+
+
 app.listen(PORT, () => {
     console.log(`Server Listening on Port ${PORT}\nURL => http://localhost:${PORT}`);
 })
